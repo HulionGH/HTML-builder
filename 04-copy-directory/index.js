@@ -4,32 +4,58 @@ let currentDirname = path.dirname(__filename);
 let pathCurrentFolder = path.join(__dirname, "files");
 let pathOfCopy = path.join(__dirname, "files-copy");
 
-fs.access(pathOfCopy, function (error) {
-  if (error) {
-    fs.mkdir(path.join(currentDirname, "files-copy"), (err) => {
-      if (err) throw err;
-    });
-  } else {
-    fs.readdir(pathOfCopy, (err, files) => {
-      //clean folder it it exists
-      if (err) throw err;
-      for (const file of files) {
-        const fullPath = path.join(pathOfCopy, file);
-        fs.lstat(fullPath, (err, file) => {
-          if (err) throw err;
-          if (file.isDirectory()) {
-            fs.rmdir(fullPath, (err) => {
-              if (err) throw err;
-            });
-          } else {
-            fs.unlink(fullPath, (err) => {
-              if (err) throw err;
-            });
-          }
-        });
-      }
-    });
-  }
+const listPromise = [];
+new Promise((resolve, reject) => {
+  fs.access(pathOfCopy, function (error) {
+    if (error) {
+      fs.mkdir(path.join(currentDirname, "files-copy"), (err) => {
+        resolve();
+        if (err) throw err;
+      });
+    } else {
+      fs.readdir(pathOfCopy, (err, files) => {
+        //clean folder it it exists
+        if (err) throw err;
+        for (const file of files) {
+          const fullPath = path.join(pathOfCopy, file);
+          listPromise.push(
+            new Promise((resolve, reject) => {
+              fs.lstat(fullPath, (err, file) => {
+                if (err) {
+                  reject();
+                  throw err;
+                }
+
+                if (file.isDirectory()) {
+                  fs.rmdir(fullPath, { recursive: true }, (err) => {
+                    if (err) {
+                      reject();
+                      throw err;
+                    } else {
+                      resolve();
+                    }
+                  });
+                } else {
+                  fs.unlink(fullPath, (err) => {
+                    if (err) {
+                      reject();
+                      throw err;
+                    } else {
+                      resolve();
+                    }
+                  });
+                }
+              });
+            })
+          );
+        }
+
+        resolve();
+      });
+    }
+  });
+}).then(() => {
+  Promise.all(listPromise).then(() => copyDir(pathCurrentFolder, pathOfCopy));
 });
 
 function copyDir(src, dest) {
@@ -43,7 +69,7 @@ function copyDir(src, dest) {
           let currentPath = path.join(src, file);
           let destPath = path.join(dest, file);
           fs.mkdir(destPath, (err) => {
-            if (err) throw err;
+            if (err) throw err; //здесь ошибка
           });
           copyDir(currentPath, destPath);
         } else {
@@ -57,5 +83,3 @@ function copyDir(src, dest) {
     });
   });
 }
-
-copyDir(pathCurrentFolder, pathOfCopy);

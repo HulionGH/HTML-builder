@@ -69,7 +69,7 @@ function copyDir(src, dest) {
           let currentPath = path.join(src, file);
           let destPath = path.join(dest, file);
           fs.mkdir(destPath, (err) => {
-            if (err) throw err; //здесь ошибка
+            if (err) throw err;
           });
           copyDir(currentPath, destPath);
         } else {

@@ -4,12 +4,11 @@ const { stdin, stdout } = process;
 let pathOfStyles = path.join(__dirname, "styles");
 let stylesData = "";
 
-//создан файл
 fs.writeFile(path.join(__dirname, "project-dist", "bundle.css"), "", (err) => {
   if (err) throw err;
 });
 let bundlePath = path.join(__dirname, "project-dist", "bundle.css");
-//работаем со списком стилей
+
 fs.readdir(pathOfStyles, (err, files) => {
   if (err) {
     return console.log("Unable to scan directory: " + err);

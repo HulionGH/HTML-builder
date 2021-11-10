@@ -5,70 +5,88 @@ const destPath = path.join(__dirname, "project-dist");
 let stylesData = "";
 let templateHtml = "";
 
-fs.mkdir(path.join(__dirname, "project-dist"), (err) => {
-  if (err) throw err;
-});
 let currentDirname = path.dirname(__filename);
 //copy dir ASSETS
 let pathCurrentFolder = path.join(__dirname, "assets");
 let pathOfCopy = path.join(__dirname, "project-dist", "assets");
 new Promise((resolve, reject) => {
-  fs.access(pathOfCopy, function (error) {
-    if (error) {
-      fs.mkdir(path.join(currentDirname, "project-dist", "assets"), (err) => {
+  fs.access(destPath, (err) => {
+    if (err) {
+      fs.mkdir(destPath, (err) => {
         resolve();
         if (err) throw err;
       });
     } else {
-      fs.readdir(pathOfCopy, (err, files) => {
-        //clean folder it it exists
-        if (err) throw err;
-        for (const file of files) {
-          const fullPath = path.join(pathOfCopy, file);
-          listPromise.push(
-            new Promise((resolve, reject) => {
-              fs.lstat(fullPath, (err, file) => {
-                if (err) {
-                  reject();
-                  throw err;
-                }
-
-                if (file.isDirectory()) {
-                  fs.rmdir(fullPath, { recursive: true }, (err) => {
-                    if (err) {
-                      reject();
-                      throw err;
-                    } else {
-                      resolve();
-                    }
-                  });
-                } else {
-                  fs.unlink(fullPath, (err) => {
-                    if (err) {
-                      reject();
-                      throw err;
-                    } else {
-                      resolve();
-                    }
-                  });
-                }
-              });
-            })
-          );
+      fs.rmdir(destPath, { recursive: true }, (err) => {
+        if (err) {
+          reject();
+          throw err;
+        } else {
+          fs.mkdir(destPath, (err) => {
+            resolve();
+            if (err) throw err;
+          });
         }
-
-        resolve();
       });
     }
   });
-}).then(() => {
-  Promise.all(listPromise).then(() => {
-    copyDir(pathCurrentFolder, pathOfCopy);
-    bundleStyles();
-    rewriteAndCopyIndex();
-    console.log("the End");
-  });
-});
+}).then(() =>
+  new Promise((resolve, reject) => {
+    fs.access(pathOfCopy, function (error) {
+      if (error) {
+        fs.mkdir(path.join(currentDirname, "project-dist", "assets"), (err) => {
+          resolve();
+          if (err) throw err;
+        });
+      } else {
+        fs.readdir(pathOfCopy, (err, files) => {
+          //clean folder it it exists
+          if (err) throw err;
+          for (const file of files) {
+            const fullPath = path.join(pathOfCopy, file);
+            listPromise.push(
+              new Promise((resolve, reject) => {
+                fs.lstat(fullPath, (err, file) => {
+                  if (err) {
+                    reject();
+                    throw err;
+                  }
+
+                  if (file.isDirectory()) {
+                    fs.rmdir(fullPath, { recursive: true }, (err) => {
+                      if (err) {
+                        reject();
+                        throw err;
+                      } else {
+                        resolve();
+                      }
+                    });
+                  } else {
+                    fs.unlink(fullPath, (err) => {
+                      if (err) {
+                        reject();
+                        throw err;
+                      } else {
+                        resolve();
+                      }
+                    });
+                  }
+                });
+              })
+            );
+          }
+          resolve();
+        });
+      }
+    });
+  }).then(() => {
+    Promise.all(listPromise).then(() => {
+      copyDir(pathCurrentFolder, pathOfCopy);
+      bundleStyles();
+      rewriteAndCopyIndex();
+    });
+  })
+);
 
 function copyDir(src, dest) {
   fs.readdir(src, (err, files) => {

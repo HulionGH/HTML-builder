@@ -25,8 +25,9 @@ output.write(
 
 rl.on("line", (data) => {
   const dataStringified = data.toString();
+  let result = dataStringified;
   if (dataStringified.includes("exit")) {
-    let result = dataStringified.replace(/exit/g, "");
+    result = dataStringified.replace(/exit/g, "");
     output.write("\nЗапись завершена!");
     process.exit();
   }

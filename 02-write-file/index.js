@@ -17,7 +17,7 @@ stdout.write(
 
 rl.on("line", (data) => {
   const dataStringified = data.toString();
-  if (dataStringified.slice(0, -2) === "exit") {
+  if (dataStringified === "exit") {
     stdout.write("\nЗапись завершена!");
     process.exit();
   }
